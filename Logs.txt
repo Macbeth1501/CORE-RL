@@ -225,20 +225,16 @@ Success Check: Open your browser and go to http://localhost:7860/. You should se
 Keep this running! Do not close this terminal.
 
 
-Step 3: Set Environment Variables (Terminal 2)
+Step 3: Set Environment Variables (Terminal 2) python inference.py
 Before running the agent, you must provide the API keys and URL.
 
 Run these commands (Replace with your actual keys):
 
 Bash
 # On Windows (Command Prompt):
-set HF_TOKEN=your_huggingface_write_token
+
+set HF_TOKEN=
 set API_BASE_URL=https://router.huggingface.co/v1
 set MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 set PING_URL=http://localhost:7860
-
-# On Mac/Linux:
-export HF_TOKEN=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
-export API_BASE_URL=https://router.huggingface.co/v1
-export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
-export PING_URL=http://localhost:7860
+set PYTHONPATH=%PYTHONPATH%;. 
