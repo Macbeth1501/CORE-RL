@@ -59,7 +59,8 @@ def get_agent_action(client: OpenAI, observation: dict) -> Action:
 async def main():
     # 1. Setup Clients
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    remote_url = os.getenv("PING_URL", "http://localhost:7860")
+    #remote_url = os.getenv("PING_URL", "http://localhost:7860")
+    remote_url = os.getenv("PING_URL", "https://macbeth1501-core-rl.hf.space")
 
     class FinOpsClient(EnvClient):
         def _parse_result(self, data):
