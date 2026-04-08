@@ -14,4 +14,13 @@ pip install openenv-core pydantic openai uvicorn fastapi
 
 Initialize the OpenEnv Structure
 Instead of creating files manually, we will use the OpenEnv CLI to "scaffold" the project.
+
 openenv init core_rl
+
+
+
+
+Defining the Data Models (models.py)
+
+Creating the Environment Metadata (openenv.yaml)
+Tell the OpenEnv validator about your 3 tasks and their difficulty levels. This file is the "ID Card" for your project.
