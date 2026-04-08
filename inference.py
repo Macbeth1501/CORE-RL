@@ -5,18 +5,23 @@ import json
 from typing import List, Optional
 from openai import OpenAI
 from openenv.core.env_client import EnvClient
-# Change this line (approx line 13)
-from core_rl.server.models import Action, Observation  # Added Observation and fixed path
+from core_rl.server.models import Action, Observation
 
-# --- Configuration ---
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
-TASK_NAME = os.getenv("CORE_RL_TASK", "zombie_hunter")
+# --- CONFIGURATION (STRICT CHECKLIST COMPLIANCE) ---
+# Defaults are allowed for these two
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+
+# NO DEFAULT allowed for HF_TOKEN
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+# Internal helper for your Space URL
+REMOTE_ENV_URL = os.getenv("PING_URL", "https://macbeth1501-core-rl.hf.space")
+
 BENCHMARK = "core_rl"
 MAX_STEPS = 8
 
-# --- Logging Helpers (MANDATORY FORMAT) ---
+# --- LOGGING HELPERS (STRICT START/STEP/END FORMAT) ---
 def log_start(task: str, env: str, model: str):
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
@@ -29,9 +34,8 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]):
     rew_str = ",".join([f"{r:.2f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rew_str}", flush=True)
 
-# --- LLM Logic ---
+# --- LLM LOGIC ---
 def get_agent_action(client: OpenAI, observation: dict) -> Action:
-    """Ask the LLM to decide on a FinOps action based on the dashboard."""
     system_prompt = textwrap.dedent("""
         You are a Cloud FinOps Engineer. Your goal is to reduce cloud costs.
         You can use: stop, resize, or no_op.
@@ -52,15 +56,12 @@ def get_agent_action(client: OpenAI, observation: dict) -> Action:
         )
         data = json.loads(response.choices[0].message.content)
         return Action(**data)
-    except Exception as e:
-        # Fallback to no_op on error
+    except:
         return Action(command="no_op", resource_id="none")
 
 async def main():
-    # 1. Setup Clients
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    #remote_url = os.getenv("PING_URL", "http://localhost:7860")
-    remote_url = os.getenv("PING_URL", "https://macbeth1501-core-rl.hf.space")
+    # ALL LLM calls use the OpenAI client configured via these variables
+    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
     class FinOpsClient(EnvClient):
         def _parse_result(self, data):
@@ -77,9 +78,7 @@ async def main():
         def _parse_state(self, data): return data
         def _step_payload(self, action): return action.model_dump()
 
-    env = FinOpsClient(remote_url)
-    
-    # LIST OF TASKS TO EVALUATE
+    env = FinOpsClient(REMOTE_ENV_URL)
     tasks_to_run = ["zombie_hunter", "fleet_resizer", "budget_breach"]
 
     for current_task in tasks_to_run:
@@ -107,22 +106,19 @@ async def main():
                 if result.done:
                     break
             
-            # --- TASK-SPECIFIC SCORING ---
             final_reward = sum(rewards)
             if current_task == "zombie_hunter":
-                score = final_reward / 0.6  # 3 zombies * 0.2
+                score = final_reward / 0.6
             elif current_task == "fleet_resizer":
-                score = final_reward / 0.5  # 5 resizes * 0.1
-            else: # budget_breach
-                # In budget breach, the agent needs to save ~$1000. 
-                # Let's say saving 5 nodes ($1.0 reward) is a good baseline.
+                score = final_reward / 0.5
+            else:
                 score = final_reward / 1.0 
 
             score = min(max(score, 0.0), 1.0) 
             success = score >= 0.7 
 
         except Exception as e:
-            print(f"[DEBUG] Task {current_task} failed: {e}")
+            pass
         finally:
             log_end(success, steps_taken, score, rewards)
 
