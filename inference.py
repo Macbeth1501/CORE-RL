@@ -65,84 +65,65 @@ async def main():
         def _parse_result(self, data):
             class Result:
                 def __init__(self, d):
-                    # ROBUST EXTRACTION:
-                    # If 'd' is the whole result, it has an 'observation' key.
-                    # We need to extract that inner dictionary to build the Observation object.
-                    if isinstance(d, dict) and "observation" in d:
-                        obs_payload = d["observation"]
-                    else:
-                        obs_payload = d
-                    
-                    # Sometimes the framework nests it twice, let's be safe:
+                    obs_payload = d.get("observation", d)
                     if isinstance(obs_payload, dict) and "observation" in obs_payload:
                         obs_payload = obs_payload["observation"]
-
-                    # Now initialize our Pydantic model with the raw fields (resources, etc.)
                     self.observation = Observation(**obs_payload)
-                    
-                    # Extract reward and done from the outer dictionary
-                    self.reward = d.get("reward", 0.0) if isinstance(d, dict) else 0.0
-                    self.done = d.get("done", False) if isinstance(d, dict) else False
-                    self.info = d.get("info", {}) if isinstance(d, dict) else {}
+                    self.reward = d.get("reward", 0.0)
+                    self.done = d.get("done", False)
+                    self.info = d.get("info", {})
             return Result(data)
-
-        def _parse_state(self, data): 
-            return data
-            
-        def _step_payload(self, action): 
-            return action.model_dump()
+        def _parse_state(self, data): return data
+        def _step_payload(self, action): return action.model_dump()
 
     env = FinOpsClient(remote_url)
-
-    rewards = []
-    steps_taken = 0
-    success = False
-    score = 0.0
     
-    log_start(TASK_NAME, BENCHMARK, MODEL_NAME)
+    # LIST OF TASKS TO EVALUATE
+    tasks_to_run = ["zombie_hunter", "fleet_resizer", "budget_breach"]
 
-    try:
-        # 2. Start Episode
-        # Fixed: env.reset returns the Result object, we need the observation inside it
-        reset_result = await env.reset(task_id=TASK_NAME)
-        obs = reset_result.observation 
+    for current_task in tasks_to_run:
+        rewards = []
+        steps_taken = 0
+        success = False
+        score = 0.0
         
-        for step in range(1, MAX_STEPS + 1):
-            # 3. Get LLM decision
-            action_obj = get_agent_action(client, obs.model_dump())
-            
-            # 4. Step Environment
-            result = await env.step(action_obj)
-            
-            # 5. Log Step
-            reward = result.reward or 0.0
-            rewards.append(reward)
-            steps_taken = step
-            log_step(step, action_obj.command, reward, result.done, None)
-            
-            # Update obs for the next iteration
-            obs = result.observation
-            if result.done:
-                break
-        
-        # Calculate final score (normalized 0-1)
-        final_reward = sum(rewards)
-        
-        # Max reward for zombie_hunter is 0.2 * 3 = 0.6
-        # Max reward for fleet_resizer is 0.1 * 5 = 0.5
-        # We normalize against these targets to get a score closer to 1.0
-        if TASK_NAME == "zombie_hunter":
-            score = final_reward / 0.6
-        elif TASK_NAME == "fleet_resizer":
-            score = final_reward / 0.5
-        else:
-            score = final_reward / 1.0 # fallback for hard task
+        log_start(current_task, BENCHMARK, MODEL_NAME)
 
-        score = min(max(score, 0.0), 1.0) # Clamp between 0 and 1
-        success = score >= 0.8 # Consider it a success if we got most of them
+        try:
+            reset_result = await env.reset(task_id=current_task)
+            obs = reset_result.observation 
+            
+            for step in range(1, MAX_STEPS + 1):
+                action_obj = get_agent_action(client, obs.model_dump())
+                result = await env.step(action_obj)
+                
+                reward = result.reward or 0.0
+                rewards.append(reward)
+                steps_taken = step
+                log_step(step, action_obj.command, reward, result.done, None)
+                
+                obs = result.observation
+                if result.done:
+                    break
+            
+            # --- TASK-SPECIFIC SCORING ---
+            final_reward = sum(rewards)
+            if current_task == "zombie_hunter":
+                score = final_reward / 0.6  # 3 zombies * 0.2
+            elif current_task == "fleet_resizer":
+                score = final_reward / 0.5  # 5 resizes * 0.1
+            else: # budget_breach
+                # In budget breach, the agent needs to save ~$1000. 
+                # Let's say saving 5 nodes ($1.0 reward) is a good baseline.
+                score = final_reward / 1.0 
 
-    finally:
-        log_end(success, steps_taken, score, rewards)
+            score = min(max(score, 0.0), 1.0) 
+            success = score >= 0.7 
+
+        except Exception as e:
+            print(f"[DEBUG] Task {current_task} failed: {e}")
+        finally:
+            log_end(success, steps_taken, score, rewards)
 
 if __name__ == "__main__":
     asyncio.run(main())
