@@ -4,8 +4,8 @@ from openenv.core.env_server import Environment
 from .models import Action, Observation, Resource, Reward
 
 class CoreRLEnvironment(Environment):
-    def __init__(self, **kwargs): # Added **kwargs here
-        super().__init__()
+    def __init__(self, id: str = "core_rl", **kwargs):
+        super().__init__() 
         self.resources: Dict[str, Resource] = {}
         self.budget_limit = 500.0
         self.steps_taken = 0
@@ -39,7 +39,7 @@ class CoreRLEnvironment(Environment):
                 self._add_res(f"app-node-{i}", "VM", 0.1, 100.0, False)
             self._add_res("critical-gateway", "VM", 0.9, 200.0, True)
 
-        return self._get_obs()
+        return self._get_obs(reward=0.0)
 
     def step(self, action: Action) -> (Observation, float, bool, dict):
         """Processes FinOps actions and calculates rewards."""
@@ -82,7 +82,7 @@ class CoreRLEnvironment(Environment):
         if self.steps_taken >= self.max_steps:
             self.is_done = True
 
-        return self._get_obs(), step_reward, self.is_done, {"reason": self.last_msg}
+        return self._get_obs(reward=step_reward), step_reward, self.is_done, {"reason": self.last_msg}
 
     def _add_res(self, id, rtype, util, cost, critical):
         self.resources[id] = Resource(
@@ -90,14 +90,24 @@ class CoreRLEnvironment(Environment):
             cost_per_hour=cost, is_critical=critical
         )
 
-    def _get_obs(self) -> Observation:
+    def _get_obs(self, reward: float = 0.0) -> Observation:
         current_spend = sum(r.cost_per_hour for r in self.resources.values())
-        # System health drops to 0 if a critical node is missing
         health = 1.0 if any(r.is_critical for r in self.resources.values()) else 0.0
         return Observation(
             resources=list(self.resources.values()),
             current_hourly_spend=current_spend,
             budget_limit=self.budget_limit,
             system_health=health,
-            last_action_status=self.last_msg
+            last_action_status=self.last_msg,
+            reward=reward,
+            done=self.is_done  # PASS THE CURRENT STATE HERE
         )
+    def state(self) -> dict:
+        """Returns the internal state for logging/debugging."""
+        return {
+            "resources_count": len(self.resources),
+            "steps_taken": self.steps_taken,
+            "budget_limit": self.budget_limit,
+            "is_done": self.is_done,
+            "last_msg": self.last_msg
+        }

@@ -20,8 +20,10 @@ class Observation(BaseModel):
     resources: List[Resource]
     current_hourly_spend: float
     budget_limit: float
-    system_health: float = Field(..., description="Overall health (0.0 to 1.0)")
+    system_health: float
     last_action_status: str
+    reward: float = 0.0
+    done: bool = False
 
 # THE REWARD: Required by OpenEnv spec
 class Reward(BaseModel):

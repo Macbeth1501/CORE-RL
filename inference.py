@@ -4,8 +4,9 @@ import textwrap
 import json
 from typing import List, Optional
 from openai import OpenAI
-from core_rl.client import CoreRlEnv as EnvClient
-from core_rl.models import Action
+from openenv.core.env_client import EnvClient
+# Change this line (approx line 13)
+from core_rl.server.models import Action, Observation  # Added Observation and fixed path
 
 # --- Configuration ---
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
@@ -58,9 +59,27 @@ def get_agent_action(client: OpenAI, observation: dict) -> Action:
 async def main():
     # 1. Setup Clients
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    # EnvClient connects to your local FastAPI server or remote HF Space
     remote_url = os.getenv("PING_URL", "http://localhost:7860")
-    env = EnvClient(remote_url)
+
+    class FinOpsClient(EnvClient):
+        def _parse_result(self, data):
+            class Result:
+                def __init__(self, d):
+                    # Fixed: Ensure we pull the observation correctly from the dict
+                    obs_data = d.get("observation", d) # fallback if nested or flat
+                    self.observation = Observation(**obs_data)
+                    self.reward = d.get("reward", 0.0)
+                    self.done = d.get("done", False)
+                    self.info = d.get("info", {})
+            return Result(data)
+
+        def _parse_state(self, data): 
+            return data
+            
+        def _step_payload(self, action): 
+            return action.model_dump()
+
+    env = FinOpsClient(remote_url)
 
     rewards = []
     steps_taken = 0
@@ -71,7 +90,9 @@ async def main():
 
     try:
         # 2. Start Episode
-        obs = await env.reset(task_id=TASK_NAME)
+        # Fixed: env.reset returns the Result object, we need the observation inside it
+        reset_result = await env.reset(task_id=TASK_NAME)
+        obs = reset_result.observation 
         
         for step in range(1, MAX_STEPS + 1):
             # 3. Get LLM decision
@@ -86,14 +107,15 @@ async def main():
             steps_taken = step
             log_step(step, action_obj.command, reward, result.done, None)
             
+            # Update obs for the next iteration
             obs = result.observation
             if result.done:
                 break
         
         # Calculate final score (normalized 0-1)
         final_reward = sum(rewards)
-        # We consider it a success if we didn't fail critically and saved some money
         success = final_reward > 0
+        # Normalizing: If 3 zombies saved $0.6 total, this keeps score in [0,1]
         score = min(max(final_reward / 2.0, 0.0), 1.0) 
 
     finally:

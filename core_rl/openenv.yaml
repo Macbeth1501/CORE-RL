@@ -2,11 +2,11 @@ spec_version: 1
 name: core_rl
 type: space
 runtime: fastapi
-app: server.app:app
-port: 8000
+app: core_rl.server.app:app  # Updated
+port: 7860                   # Updated to match HF standard
 version: "1.0"
 description: "Cloud Optimization & Resource Efficiency Benchmark for FinOps Agents."
-entrypoint: "server.main:app"
+entrypoint: "core_rl.server.app:app" # Updated
 
 tasks:
   - id: "zombie_hunter"

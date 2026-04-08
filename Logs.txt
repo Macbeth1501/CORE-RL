@@ -238,3 +238,22 @@ set API_BASE_URL=https://router.huggingface.co/v1
 set MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 set PING_URL=http://localhost:7860
 set PYTHONPATH=%PYTHONPATH%;. 
+
+Step 1: Create the Space on Hugging Face
+Go to huggingface.co/new-space.
+
+Owner: Your username (Rochan).
+
+Space Name: core-rl (or whatever name you prefer).
+
+License: MIT or Apache 2.0 (standard for hackathons).
+
+SDK: Select Docker. This is mandatory because your project has a Dockerfile.
+
+Template: Choose Blank.
+
+Hardware: Choose CPU basic - 2 vCPU - 16 GB RAM (This is free and exceeds the 8GB requirement in the rules).
+
+Visibility: Set to Public. The judges and the validator script need to access it.
+
+Click Create Space.
