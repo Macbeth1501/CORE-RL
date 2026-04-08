@@ -1,5 +1,6 @@
 import os
 from openenv.core.env_server.http_server import create_app
+from fastapi.responses import RedirectResponse
 
 # Import your custom FinOps logic
 try:
@@ -26,6 +27,9 @@ app = create_app(
     env_name="core_rl",
     max_concurrent_envs=1,
 )
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 if __name__ == "__main__":
     import uvicorn
