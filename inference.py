@@ -65,12 +65,25 @@ async def main():
         def _parse_result(self, data):
             class Result:
                 def __init__(self, d):
-                    # Fixed: Ensure we pull the observation correctly from the dict
-                    obs_data = d.get("observation", d) # fallback if nested or flat
-                    self.observation = Observation(**obs_data)
-                    self.reward = d.get("reward", 0.0)
-                    self.done = d.get("done", False)
-                    self.info = d.get("info", {})
+                    # ROBUST EXTRACTION:
+                    # If 'd' is the whole result, it has an 'observation' key.
+                    # We need to extract that inner dictionary to build the Observation object.
+                    if isinstance(d, dict) and "observation" in d:
+                        obs_payload = d["observation"]
+                    else:
+                        obs_payload = d
+                    
+                    # Sometimes the framework nests it twice, let's be safe:
+                    if isinstance(obs_payload, dict) and "observation" in obs_payload:
+                        obs_payload = obs_payload["observation"]
+
+                    # Now initialize our Pydantic model with the raw fields (resources, etc.)
+                    self.observation = Observation(**obs_payload)
+                    
+                    # Extract reward and done from the outer dictionary
+                    self.reward = d.get("reward", 0.0) if isinstance(d, dict) else 0.0
+                    self.done = d.get("done", False) if isinstance(d, dict) else False
+                    self.info = d.get("info", {}) if isinstance(d, dict) else {}
             return Result(data)
 
         def _parse_state(self, data): 
@@ -114,9 +127,19 @@ async def main():
         
         # Calculate final score (normalized 0-1)
         final_reward = sum(rewards)
-        success = final_reward > 0
-        # Normalizing: If 3 zombies saved $0.6 total, this keeps score in [0,1]
-        score = min(max(final_reward / 2.0, 0.0), 1.0) 
+        
+        # Max reward for zombie_hunter is 0.2 * 3 = 0.6
+        # Max reward for fleet_resizer is 0.1 * 5 = 0.5
+        # We normalize against these targets to get a score closer to 1.0
+        if TASK_NAME == "zombie_hunter":
+            score = final_reward / 0.6
+        elif TASK_NAME == "fleet_resizer":
+            score = final_reward / 0.5
+        else:
+            score = final_reward / 1.0 # fallback for hard task
+
+        score = min(max(score, 0.0), 1.0) # Clamp between 0 and 1
+        success = score >= 0.8 # Consider it a success if we got most of them
 
     finally:
         log_end(success, steps_taken, score, rewards)

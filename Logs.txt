@@ -257,3 +257,7 @@ Hardware: Choose CPU basic - 2 vCPU - 16 GB RAM (This is free and exceeds the 8G
 Visibility: Set to Public. The judges and the validator script need to access it.
 
 Click Create Space.
+
+
+git remote add hf https://huggingface.co/spaces/YOUR_USERNAME/core-rl
+git remote add hf https://YOUR_HF_USERNAME:YOUR_HF_TOKEN@huggingface.co/spaces/YOUR_HF_USERNAME/core-rl
