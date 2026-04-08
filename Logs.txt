@@ -5,3 +5,13 @@ git commit -m "Initial Commit"
 git branch -M main
 git push -u origin main
 
+Create Venv
+python -m venv CORE-RL-venv
+CORE-RL-venv\Scripts\activate
+
+Installing dependnecies
+pip install openenv-core pydantic openai uvicorn fastapi
+
+Initialize the OpenEnv Structure
+Instead of creating files manually, we will use the OpenEnv CLI to "scaffold" the project.
+openenv init core_rl
