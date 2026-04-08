@@ -114,7 +114,7 @@ async def main():
             else:
                 score = final_reward / 1.0 
 
-            score = min(max(score, 0.0), 1.0) 
+            score = min(max(score, 0.001), 0.999)
             success = score >= 0.7 
 
         except Exception as e:
