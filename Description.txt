@@ -1,0 +1,325 @@
+Project Title: CORE-RL
+
+Full Expansion: Cloud Optimization & Resource Efficiency Reinforcement Learning
+
+Main Subtitle :
+
+A high-fidelity OpenEnv benchmark for training autonomous AI agents to solve complex multi-objective Cloud FinOps challenges.
+
+CORE-RL is a realistic OpenEnv environment that simulates a modern cloud resource dashboard. It challenges AI agents to act as FinOps engineers — finding and eliminating idle ("zombie") resources, right-sizing oversized instances, and strictly enforcing budget constraints without ever compromising business-critical services.
+
+
+
+
+
+///////////////////////////////////////////////////////////////////
+Hackathon Description
+
+PROBLEM STATEMENT
+Round 1 — Problem Statement
+
+THE TASK
+Build a complete, real-world OpenEnv environment that an AI agent can learn from through the standard  step() / reset() / state()  API.
+
+KEY REQUIREMENTS AT A GLANCE
+
+Must simulate a real-world task (not games or toys)
+
+Implement full OpenEnv spec: typed models, step()/reset()/state(), openenv.yaml
+
+Minimum 3 tasks with agent graders (easy → medium → hard, scores/reward 0.0–1.0)
+
+Meaningful reward function with partial progress signals
+
+Baseline inference script with reproducible scores
+
+Deploy to Hugging Face Spaces + working Dockerfile
+
+README with environment description, action/observation spaces, setup instructions
+
+
+Functional Requirements
+Real-world task simulation
+The environment must simulate a task humans actually do. Not games, not toys. Examples: email triage, code review, data cleaning, scheduling, customer support, content moderation.
+OpenEnv spec compliance
+Implement the full OpenEnv interface: typed Observation, Action, and Reward Pydantic models. step(action) → returns observation, reward, done, info. reset() → returns initial observation. state() → returns current state. openenv.yaml with metadata. Tested via openenv validate.
+Minimum 3 tasks with agent graders
+Each task defines a concrete objective an agent must accomplish, with a programmatic grader that scores performance (0.0–1.0). Tasks should range: easy → medium → hard. Graders must have clear, deterministic success/failure criteria.
+Meaningful reward function
+Provides signal over the full trajectory (not just binary end-of-episode). Rewards partial progress toward task completion. Penalizes clearly undesirable behavior (e.g. infinite loops, destructive actions).
+Baseline inference script
+Uses the OpenAI API client to run a model against the environment. Reads API credentials from environment variables (OPENAI_API_KEY). Produces a reproducible baseline score on all 3 tasks.
+
+Non-Functional Requirements
+Deploys to a Hugging Face Space
+Environment must run as a containerized HF Space tagged with openenv.
+Containerized execution
+Must include a working Dockerfile. The environment should start cleanly with docker build + docker run.
+Documentation
+README must include: environment description and motivation, action and observation space definitions, task descriptions with expected difficulty, setup and usage instructions, baseline scores.
+
+Scoring Breakdown
+Real-world utility (30%)
+•  0–5: Toy/artificial problem with no practical application
+•  6–15: Valid domain but shallow modeling of the real task
+•  16–25: Good domain modeling, would be useful for agent evaluation
+•  26–30: Excellent — fills a real gap, immediate value for the RL/agent community
+Task & grader quality (25%)
+•  3+ tasks with difficulty range?
+•  Graders produce scores between 0.0–1.0?
+•  Graders deterministic and reproducible?
+•  Hard task genuinely challenges frontier models?
+Environment design (20%)
+•  reset() produces clean state?
+•  Action/observation types well-designed and documented?
+•  Reward function provides useful varying signal (not just sparse)?
+•  Episode boundaries sensible?
+Code quality & spec compliance (15%)
+•  openenv validate passes?
+•  docker build && docker run works?
+•  HF Space deploys and responds?
+•  Baseline script runs and reproduces scores?
+Creativity & novelty (10%)
+•  Domain we haven’t seen in OpenEnv before?
+•  Reward design has interesting properties?
+•  Clever mechanics that make the environment engaging?
+
+how judging works
+Phase 1: Automated Validation
+Pass/fail gate — HF Space deploys, OpenEnv spec compliance, Dockerfile builds, baseline reproduces, 3+ tasks with graders.
+Phase 2: Agentic Evaluation
+Scored — baseline agent re-run, standard Open LLM agent (e.g. Nemotron 3 Super) run against all environments, score variance check.
+Phase 3: Human Review
+Top submissions reviewed by Meta and Hugging Face engineers for real-world utility, creativity, and exploit checks.
+DISQUALIFICATION CRITERIA
+
+Environment does not deploy or respond
+
+Plagiarized or trivially modified existing environments
+
+Graders that always return the same score
+
+No baseline inference script
+Pre submission checklist
+HF Space deploys
+Automated ping to the Space URL — must return 200 and respond to reset()
+
+OpenEnv spec compliance
+Validate openenv.yaml, typed models, step()/reset()/state() endpoints
+
+Dockerfile builds
+Automated docker build on the submitted repo
+
+Baseline reproduces
+Run the submitted inference script — must complete without error and produce scores
+
+3+ tasks with graders
+Enumerate tasks, run each grader, verify scores/reward in 0.0–1.0 range
+
+Mandatory Additional Instructions
+Before submitting, ensure the following variables are defined in your environment configuration:
+API_BASE_URL   The API endpoint for the LLM.
+MODEL_NAME     The model identifier to use for inference.
+HF_TOKEN       Your Hugging Face / API key.
+The inference script must be named `inference.py` and placed in the root directory of the project
+Participants must use OpenAI Client for all LLM calls using above variables
+Participants must emit structured stdout logs strictly following the [START], [STEP], and [END] format defined in the sample inference.py provided below. Any deviation in field names, ordering, or formatting will result in incorrect evaluation scoring. Refer to the Sample Inference Script for the complete format specification and examples.
+
+Infra Restrictions
+Runtime of inference script should be less than 20min 
+Make sure your env and inference can run on a machine with vcpu=2, memory=8gb
+
+Validator
+Run the pre-submission validation script before submitting
+
+When Round 1 opens, you'll choose 1 of 4–5 problem statements and build an OpenEnv environment around it.
+Example of what a problem statement looks like
+"Build a mini-game RL environment with clearly defined tasks, automated graders, and reward logic using the OpenEnv framework."
+→ Create a mini-game an AI agent can play
+→ Define tasks with increasing difficulty
+→ Write graders that verify task completion
+→ Define reward logic for scoring
+→ Package using OpenEnv for automated evaluation
+Evaluation Criteria
+Runtime correctness
+Runs without errors
+
+
+Interface compliance
+Follows OpenEnv standard
+
+
+Task design
+ Clear, realistic, testable
+
+
+Grading logic
+
+Round 1 Guide
+What to Expect
+Prerequisites
+How to Submit
+Install before April 1st.
+Python 3.10+
+Install 3.10, 3.11, or 3.12.
+$
+Copy
+Git + GitHub account
+Push your submission to GitHub or HF.
+$
+Copy
+Hugging Face CLI
+Deploy to HF Spaces.
+$
+Copy
+$
+Copy
+OpenEnv
+The framework.
+$
+Copy
+Google Colab
+Prep course runs in Colab. Free tier works.
+$
+Copy
+OpenEnv
+The framework.
+Copy
+Docker
+Isolated container testing.
+Copy
+Recommended
+VS Code
+Best Python + Docker support
+When Round 1 starts on 1 April:
+
+STEP 1
+Application Form
+Choose 1 of the 4–5 problem statements revealed on the platform.
+
+STEP 2
+ Scaffold
+$
+Copy
+Generate project structure.
+
+STEP 3
+Build
+Define your environment in the generated files.
+
+STEP 4
+Test locally
+$
+Copy
+
+STEP 5
+Deploy
+$
+Copy
+STEP 6
+ Submit
+Paste your HF Spaces URL here before the deadline.
+
+Deadline: 8 April 2026, 11:59 PM IST
+
+////////////////////////////////////////////////////////////
+
+Problem Description 
+
+1. The Executive Summary
+CloudControl-Env is a high-fidelity simulation of a modern multi-cloud billing and resource dashboard. It challenges AI agents to act as "FinOps Engineers"—autonomous auditors capable of navigating complex resource hierarchies to eliminate waste, right-size infrastructure, and enforce strict budgetary guardrails without compromising system availability.
+
+2. The Problem (The "Why")
+Enterprise cloud waste is estimated at over $30 Billion annually.
+The Complexity Gap: Traditional "static" tools can flag waste, but they cannot act. Human engineers are too slow to manage thousands of ephemeral resources.
+The Agentic Challenge: Current AI agents are good at coding but struggle with multi-objective reasoning (e.g., "I need to save money, but I must not delete the database").
+The Benchmarking Gap: There is currently no standard OpenEnv environment that simulates the high-stakes, high-data density of a cloud billing console.
+
+3. The Environment Logic
+The environment tracks a state of CloudResources. Each resource has:
+id: Unique identifier (e.g., srv-prod-01).
+type: VM, Managed Database, or Storage Bucket.
+utilization: A float (0.0–1.0) representing real-time CPU/Memory usage.
+cost_per_hour: The financial weight of the resource.
+is_critical: A boolean flag. If True, stopping this resource triggers an immediate failure.
+Action Space:
+stop_resource(id): Shuts down a resource (Cost becomes $0).
+resize_resource(id, new_tier): Changes the tier (e.g., xlarge → micro), reducing cost but affecting performance limits.
+no_op(): Do nothing for this step.
+
+4. The 3-Tier Task System
+Your environment will programmatically generate three distinct scenarios:
+Task
+Level
+Objective
+Success Criteria
+"The Ghost Hunter"
+Easy
+Find and terminate "Zombie" resources (0% utilization).
+100% of unused resources stopped.
+"The Scale-Down"
+Medium
+"Right-size" a cluster where 5+ VMs are oversized (e.g., 5% usage on an 8-core machine).
+Achieve >30% savings while maintaining health.
+"The Budget Breach"
+Hard
+A "Hard Budget" of $500 is set. Total spend is $1,500.
+Meet budget by pruning non-critical nodes only.
+
+
+5. The "Dense" Reward Function
+To ensure the agent learns effectively, we use a Multi-Component Reward System ($\sum R$):
+Efficiency Reward ($+R$): * +0.2 for every $10% reduction in total hourly spend.
++0.3 "Surgical Bonus" if the agent targets a resource with $<5\%$ utilization.
+Safety Penalty ($-R$): * -1.0 (Immediate Terminal Failure) if the agent calls stop_resource() on an is_critical: True resource.
+Stability Penalty ($-R$):
+-0.1 per step if the "System Health" (based on remaining capacity) drops below a threshold.
+Final Success Bonus ($+1.0$):
+Awarded by the Grader only if the final state meets the Task Objective (e.g., Budget Met).
+
+6. Why This Wins the Hackathon
+Real-World Utility (30%): Directly addresses a massive corporate pain point (Cloud Waste).
+Novelty (10%): First of its kind in the OpenEnv registry.
+Technical Depth: Requires the agent to parse structured data (Observations) and perform mathematical comparisons before acting.
+Safety-First Design: Includes "Criticality" logic, which is the #1 concern for real-world AI deployment.
+//////////////////////////////////////////////////////////////////////
+PROBLEM STATEMENT: CloudControl-Env
+The Objective
+Build a complete OpenEnv environment that simulates a Cloud FinOps (Financial Operations) dashboard. The environment must challenge an AI agent to act as an autonomous Cost Optimization Engineer, tasked with identifying and remediating cloud waste across a fleet of simulated resources (Virtual Machines, Databases, and Storage) without compromising system integrity.
+
+The Problem (Real-World Utility)
+Enterprise cloud waste is estimated at over $30 Billion annually. While traditional tools can flag "zombie" resources, they cannot autonomously take action. Modern AI agents are currently evaluated on games or coding tasks, but there is a significant gap in benchmarks for Agentic Resource Management—where an agent must balance mathematical optimization (saving money) with strict safety constraints (not deleting production databases).
+
+Environment Specifications
+1. Observation Space (State)
+The agent receives a list of CloudResource objects, each containing:
+Resource ID: Unique identifier (e.g., srv-prod-01).
+Type: Compute, Database, or Storage.
+Utilization: CPU and Memory usage percentages (0.0–1.0).
+Cost: Hourly spend in USD.
+Criticality: A boolean flag (is_critical). If True, stopping this resource triggers a system failure.
+2. Action Space
+The agent must choose from the following typed actions:
+stop_resource(id): Terminates the resource (reduces cost to $0.00).
+resize_resource(id, new_size): Scales a resource up or down (e.g., xlarge → micro).
+no_op(): Maintains current state.
+3. Tasks & Difficulty Levels
+You must implement a programmatic Grader for these three tasks:
+Easy (The Ghost Hunter): Identify and stop three "Zombie" resources with 0% utilization.
+Medium (Right-Sizing): A cluster of 5 VMs is oversized (using <5% capacity). The agent must resize them to a lower tier to achieve a 40% cost reduction.
+Hard (The Budget Breach): Total spend is $1,200/mo. The budget is $500. The agent must prune non-critical resources to meet the budget while ensuring all is_critical: True resources remain running.
+
+The Reward Function
+The environment must provide a dense reward signal to guide the agent:
+Positive (+): Proportional to the percentage of USD saved per step.
+Surgical Bonus: Extra points for targeting resources with the lowest utilization.
+Negative (-): Small penalty for every step taken (to encourage efficiency).
+Terminal Penalty (-1.0): Immediate failure if a critical resource is stopped or resized below its required capacity.
+
+Technical Requirements
+Compliance: Must pass openenv validate.
+Baseline: Provide an inference.py script using the OpenAI client that attempts to solve these tasks.
+Deployment: Dockerized environment hosted on Hugging Face Spaces.
+Constraints: Must run on 2 vCPUs and 8GB RAM; total inference runtime < 20 minutes.
+
+
