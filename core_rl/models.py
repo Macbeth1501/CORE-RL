@@ -10,18 +10,16 @@ Data models for the Core Rl Environment.
 The core_rl environment is a simple test environment that echoes back messages.
 """
 
-from openenv.core.env_server.types import Action, Observation
-from pydantic import Field
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
 
+"""
+Data models for the CORE-RL Environment.
+This file forwards the FinOps models from the server directory to the package root.
+"""
 
-class CoreRlAction(Action):
-    """Action for the Core Rl environment - just a message to echo."""
+from .server.models import Action, Observation, Resource, Reward
 
-    message: str = Field(..., description="Message to echo back")
-
-
-class CoreRlObservation(Observation):
-    """Observation from the Core Rl environment - the echoed message."""
-
-    echoed_message: str = Field(default="", description="The echoed message")
-    message_length: int = Field(default=0, description="Length of the echoed message")
+# We keep the class names generic (Action, Observation) to match 
+# the OpenEnv expectations while using our custom FinOps fields.
+__all__ = ["Action", "Observation", "Resource", "Reward"]
