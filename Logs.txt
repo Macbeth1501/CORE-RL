@@ -102,3 +102,55 @@ The last_msg: We pass this into the Observation. This is crucial for LLM Agents.
 
 3. Scenario Management
 The reset() function uses the task_id. This means your environment isn't just one game; it's a suite of three benchmarks. When you submit to Hugging Face, the automated validator will call reset(task_id="zombie_hunter") and expect to see 3 resources with 0% utilization.
+
+
+
+Step 5: The FastAPI Server (main.py)
+Goal: Create the web server that Hugging Face will run. It must expose the /reset, /step, and /state endpoints that the OpenEnv validator and the judges' agents will call.
+
+5.1 Implementation //// we used app.py
+Open core_rl/server/main.py and replace the content with this. This uses the create_env_app helper from OpenEnv, which handles the complex WebSocket and API logic for you.
+
+
+Step 6: The Dockerfile (For Hugging Face)
+Goal: Provide the instructions for Hugging Face to build your environment.
+
+6.1 Implementation
+In your root directory (the same place as openenv.yaml), create or edit the file named Dockerfile:
+
+1. The server/app.py (The API Gateway)
+Think of this file as the Translator. Your CoreRLEnvironment is pure Python logic, but the judges' evaluation scripts communicate over HTTP (the protocol of the web).
+
+create_app(...): This is a powerful helper function from the openenv-core library. Instead of us manually writing every single endpoint (like /reset or /step), this function inspects your Action and Observation models and automatically generates a web API.
+
+The Imports (try/except blocks):
+
+Meta builds these templates to work in two ways: as a standalone project or as part of a larger repository. The try/except logic ensures that no matter where the file is run from, it can find your models.py and environment.py.
+
+It checks ..models (parent directory) first, and then falls back to models (local directory).
+
+max_concurrent_envs=1: This is a resource management setting. It tells the server to only handle one agent simulation at a time. Since we only have 8GB of RAM on the Hugging Face Space, this prevents the server from crashing if multiple people try to "ping" your URL at once.
+
+The main function: This allows you to run the server locally just by typing python server/app.py. We set the default port to 7860 because that is the "magic number" for Hugging Face.
+
+2. The server/Dockerfile (The Infrastructure Blueprint)
+This is not a normal Dockerfile; it is a "Multi-Stage Build." It’s designed to be extremely efficient to stay within the vCPU=2, memory=8GB restriction.
+
+Stage 1: The Builder (AS builder)
+Goal: To prepare the environment.
+
+uv sync: We are using uv, which is a lightning-fast package manager. In this stage, the Docker container downloads all your libraries (fastapi, pydantic, openenv-core).
+
+--mount=type=cache: This is a professional trick. It caches the downloaded files so if you fix a typo and rebuild the Docker image, it doesn't have to download everything from the internet again. It makes your development much faster.
+
+Stage 2: The Runtime (FROM ${BASE_IMAGE})
+Goal: To be as small as possible.
+
+The Secret Sauce: We don't copy the "Builder" tools (like git or the uv cache) into the final image. We only copy the .venv (the virtual environment with the installed libraries) and your code.
+
+ENV PYTHONPATH: This tells Python, "Whenever you see an import like from server.models, look in /app/env to find it." Without this, your imports would break inside the container.
+
+HEALTHCHECK: This is what Hugging Face uses to see if your Space is "Alive." It pings the /health endpoint. If the server is stuck or crashed, Hugging Face will automatically try to restart it for you.
+
+The CMD: This is the final command that starts the web server when the container boots up. It tells uvicorn to run your app.py and listen for traffic on port 7860.
+
