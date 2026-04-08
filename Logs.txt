@@ -1,0 +1,7 @@
+Initialized a git repo
+git init
+git add .
+git commit -m "Initial Commit"
+git branch -M main
+git push -u origin main
+
