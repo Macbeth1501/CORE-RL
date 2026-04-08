@@ -154,3 +154,9 @@ HEALTHCHECK: This is what Hugging Face uses to see if your Space is "Alive." It 
 
 The CMD: This is the final command that starts the web server when the container boots up. It tells uvicorn to run your app.py and listen for traffic on port 7860.
 
+
+
+
+
+Step 7: The Final Inference Script (inference.py)
+Goal: Create a script that initializes your environment, asks an LLM (like Qwen or GPT-4) to solve the cloud cost problem, and logs the results in the exact format the judges' automated parser expects.
