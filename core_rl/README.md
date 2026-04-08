@@ -1,12 +1,11 @@
 ---
-title: Core Rl Environment Server
-emoji: 🏹
-colorFrom: indigo
+title: core-rl
+emoji: ☁️
+colorFrom: blue
 colorTo: indigo
 sdk: docker
+app_port: 7860
 pinned: false
-app_port: 8000
-base_path: /web
 tags:
   - openenv
 ---

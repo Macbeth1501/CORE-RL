@@ -1,53 +1,37 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
+# 1. Use a standard, stable Python 3.12 image
+FROM python:3.12-slim
 
-ARG BASE_IMAGE=ghcr.io/meta-pytorch/openenv-base:latest
-FROM ${BASE_IMAGE} AS builder
-
+# 2. Set the working directory inside the container
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends git && \
-    rm -rf /var/lib/apt/lists/*
+# 3. Install basic system tools needed for the environment
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-ARG BUILD_MODE=in-repo
-ARG ENV_NAME=core_rl
+# 4. Copy the requirements file into the root of the container
+# Ensure you have a 'requirements.txt' in your local CORE-RL folder!
+COPY requirements.txt .
 
-COPY . /app/env
-WORKDIR /app/env
+# 5. Install Python dependencies using pip
+# We include the core libraries explicitly to ensure they are present
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir uvicorn fastapi pydantic openai openenv-core
 
-RUN if ! command -v uv >/dev/null 2>&1; then \
-        curl -LsSf https://astral.sh/uv/install.sh | sh && \
-        mv /root/.local/bin/uv /usr/local/bin/uv && \
-        mv /root/.local/bin/uvx /usr/local/bin/uvx; \
-    fi
-    
-RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ -f uv.lock ]; then \
-        uv sync --frozen --no-install-project --no-editable; \
-    else \
-        uv sync --no-install-project --no-editable; \
-    fi
+# 6. Copy all your project files into the container
+COPY . .
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ -f uv.lock ]; then \
-        uv sync --frozen --no-editable; \
-    else \
-        uv sync --no-editable; \
-    fi
+# 7. Set the Python path so the server can find the 'core_rl' module
+ENV PYTHONPATH="/app"
 
-FROM ${BASE_IMAGE}
-WORKDIR /app
+# 8. Expose the port Hugging Face expects
+EXPOSE 7860
 
-COPY --from=builder /app/env/.venv /app/.venv
-COPY --from=builder /app/env /app/env
-
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app/env:$PYTHONPATH"
-
-# Updated Health check for port 7860
+# 9. Health check to let Hugging Face know the server is healthy
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
-# Updated Run command for Hugging Face (port 7860)
-CMD ["sh", "-c", "uvicorn core_rl.server.app:app --host 0.0.0.0 --port 7860"]
+# 10. Start the FastAPI server
+# This points to core_rl/server/app.py which we just verified works locally
+CMD ["uvicorn", "core_rl.server.app:app", "--host", "0.0.0.0", "--port", "7860"]
