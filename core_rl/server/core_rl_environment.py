@@ -4,7 +4,8 @@ from openenv.core.env_server import Environment
 from .models import Action, Observation, Resource, Reward
 
 class CoreRLEnvironment(Environment):
-    def __init__(self):
+    def __init__(self, **kwargs): # Added **kwargs here
+        super().__init__()
         self.resources: Dict[str, Resource] = {}
         self.budget_limit = 500.0
         self.steps_taken = 0

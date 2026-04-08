@@ -4,7 +4,7 @@ import textwrap
 import json
 from typing import List, Optional
 from openai import OpenAI
-from openenv.core.env_client import EnvClient
+from core_rl.client import CoreRlEnv as EnvClient
 from core_rl.models import Action
 
 # --- Configuration ---
@@ -65,6 +65,7 @@ async def main():
     rewards = []
     steps_taken = 0
     success = False
+    score = 0.0
     
     log_start(TASK_NAME, BENCHMARK, MODEL_NAME)
 

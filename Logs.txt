@@ -160,3 +160,85 @@ The CMD: This is the final command that starts the web server when the container
 
 Step 7: The Final Inference Script (inference.py)
 Goal: Create a script that initializes your environment, asks an LLM (like Qwen or GPT-4) to solve the cloud cost problem, and logs the results in the exact format the judges' automated parser expects.
+
+
+1. The Configuration & Clients
+OpenAI Client: Even though you might be using a Qwen model on Hugging Face, the competition mandates using the OpenAI Python library. It handles the API calls to the LLM.
+
+EnvClient: This is a specialized tool from openenv-core. Instead of calling Python functions directly, it sends web requests (POST) to your server. This proves your app.py is working and accessible over a network.
+
+2. The Mandatory Logging (STDOUT)
+The judges use an automated regular expression (regex) to grade you.
+
+log_start: Emits [START]. This tells the judge's script: "Stop watching the console and start recording the score now."
+
+log_step: Emits [STEP]. It must be printed immediately after env.step() returns. It captures the action taken, the immediate reward, and whether the agent crashed.
+
+log_end: Emits [END]. This is the summary. It includes the score (normalized between 0.0 and 1.0) and the full list of rewards.
+
+3. The "Agent" Logic (get_agent_action)
+System Prompt: We explicitly tell the LLM it is a "FinOps Engineer." We give it the most important rule: Never stop a critical resource.
+
+JSON Enforcement: We use response_format={"type": "json_object"}. This is a frontier model feature that prevents the LLM from saying "Here is the action: {JSON}". It forces the LLM to return only the JSON, which we can immediately turn into our Action model.
+
+4. The Main Loop (The Episode)
+env.reset(): This starts the scenario. We pass task_id="zombie_hunter" (or whichever task you want to test).
+
+The 8-Step Loop: The agent gets 8 chances to look at the "Dashboard" (the observation) and make a move.
+
+Step execution: We take the LLM's JSON, turn it into an Action object, and send it to the environment.
+
+Termination: If the agent hits a critical resource, result.done becomes True, the loop breaks, and the script moves to the final score calculation.
+
+Why this specific script wins points:
+Transparency: The history and last_action_status we built into the environment are fed back to the LLM, so if it makes a mistake (like trying to resize a deleted resource), it can read the error message and learn.
+
+Safety: It benchmarks "AI Safety." A "dumb" agent will fail the hard task by deleting everything. Your script proves if the LLM is smart enough to respect the is_critical flag.
+
+Spec Compliance: It follows every single bullet point in your "STDOUT FORMAT" requirement (lowercase booleans, 2-decimal rewards, etc.).
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+
+Local test
+
+ocal Test Step-by-Step
+Step 1: Open Two Terminals
+You need two separate terminal windows open in your cloudcontrol-env root directory with your virtual environment (CORE-RL-venv) activated in both.
+
+Step 2: Start the Environment Server (Terminal 1)
+We will use uvicorn to launch your FastAPI app. This mimics how Hugging Face will run your code.
+
+Run this command:
+
+Bash
+python -m uvicorn core_rl.server.app:app --host 0.0.0.0 --port 7860
+What to look for: You should see Uvicorn running on http://0.0.0.0:7860.
+
+Success Check: Open your browser and go to http://localhost:7860/. You should see your "CORE-RL Online" JSON message.
+
+Keep this running! Do not close this terminal.
+
+
+Step 3: Set Environment Variables (Terminal 2)
+Before running the agent, you must provide the API keys and URL.
+
+Run these commands (Replace with your actual keys):
+
+Bash
+# On Windows (Command Prompt):
+set HF_TOKEN=your_huggingface_write_token
+set API_BASE_URL=https://router.huggingface.co/v1
+set MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+set PING_URL=http://localhost:7860
+
+# On Mac/Linux:
+export HF_TOKEN=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
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+export PING_URL=http://localhost:7860

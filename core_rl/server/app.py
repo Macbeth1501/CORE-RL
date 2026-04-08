@@ -18,11 +18,11 @@ except Exception as e:
 try:
     # This matches the folder structure we've built
     from .models import Action, Observation
-    from .environment import CoreRLEnvironment
+    from .core_rl_environment import CoreRLEnvironment
 except (ModuleNotFoundError, ImportError):
     # Fallback for different execution contexts
     from models import Action, Observation
-    from server.environment import CoreRLEnvironment
+    from server.core_rl_environment import CoreRLEnvironment
 
 # Create the app
 app = create_app(

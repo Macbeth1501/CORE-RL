@@ -6,6 +6,7 @@
 
 """Core Rl environment server components."""
 
-from .core_rl_environment import CoreRlEnvironment
+from .core_rl_environment import CoreRLEnvironment
 
-__all__ = ["CoreRlEnvironment"]
+# CORE-RL Package Root
+__version__ = "1.0"
