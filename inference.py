@@ -5,7 +5,7 @@ import json
 from typing import List, Optional
 from openai import OpenAI
 from openenv.core.env_client import EnvClient
-from core_rl.server.models import Action, Observation
+from server.models import Action, Observation
 
 # --- CONFIGURATION (STRICT CHECKLIST COMPLIANCE) ---
 # Defaults are allowed for these two
