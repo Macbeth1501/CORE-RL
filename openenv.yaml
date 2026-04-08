@@ -6,7 +6,8 @@ app: core_rl.server.app:app  # Updated
 port: 7860                   # Updated to match HF standard
 version: "1.0"
 description: "Cloud Optimization & Resource Efficiency Benchmark for FinOps Agents."
-entrypoint: "core_rl.server.app:app" # Updated
+
+entry_point: "server.app:app"
 
 tasks:
   - id: "zombie_hunter"
