@@ -4,4 +4,26 @@ type: space
 runtime: fastapi
 app: server.app:app
 port: 8000
+version: "1.0"
+description: "Cloud Optimization & Resource Efficiency Benchmark for FinOps Agents."
+entrypoint: "server.main:app"
 
+tasks:
+  - id: "zombie_hunter"
+    name: "The Zombie Hunter"
+    difficulty: "easy"
+    description: "Identify and stop 3 resources with 0% utilization."
+  
+  - id: "fleet_resizer"
+    name: "The Scale-Down"
+    difficulty: "medium"
+    description: "Resize 5 oversized VMs to micro tier to save >30% cost."
+  
+  - id: "budget_breach"
+    name: "The Budget Breach"
+    difficulty: "hard"
+    description: "Cut total spend from $1500 to $500 without stopping critical nodes."
+
+metadata:
+  tags: ["finops", "cloud", "optimization", "resource-management"]
+  author: "Rochan & Sayali"

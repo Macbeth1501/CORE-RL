@@ -24,3 +24,48 @@ Defining the Data Models (models.py)
 
 Creating the Environment Metadata (openenv.yaml)
 Tell the OpenEnv validator about your 3 tasks and their difficulty levels. This file is the "ID Card" for your project.
+
+1. The models.py (The Interface Contract)
+In the OpenEnv framework, the agent and the environment are often running in different places (like separate Docker containers). Pydantic models act as a "Contract." They ensure that both sides speak the exact same language.
+
+The Resource Model
+Python
+class Resource(BaseModel):
+    id: str 
+    type: Literal["VM", "Database", "Storage"]
+    utilization: float
+    ...
+Why: We didn't just use a dictionary because Pydantic validates data. If your environment accidentally sends a utilization of "High" (a string) instead of 0.8 (a float), the system will throw an error immediately rather than crashing the agent later.
+
+The Literal type: This is crucial. It restricts the agent to only three specific types of resources. This makes it easier for the LLM agent to "reason" because it doesn't have to guess what types exist.
+
+The Action Model
+Python
+class Action(BaseModel):
+    command: Literal["stop", "resize", "no_op"]
+    resource_id: str
+    ...
+Why: This defines the "Controls" of your simulation. By using Literal, we are telling the LLM: "You only have three buttons to press." * Optional new_tier: Not every action needs a tier (e.g., stop doesn't need a tier). We made this Optional so the agent doesn't get confused trying to provide a tier when it just wants to delete a "Zombie" server.
+
+The Reward Model
+Why: OpenEnv requires a reason string alongside the value. This is for Explainable AI. When the judges run their evaluation, they can see why the agent got a -1.0 (e.g., "Reason: You killed a production database!").
+
+2. The openenv.yaml (The Blueprint)
+If models.py is the language, openenv.yaml is the Project Map.
+
+entrypoint: This tells the automated validator exactly where to find your server. If this path is wrong, the judge's script can't "start" your environment.
+
+The tasks list:
+
+This is how the Grader knows which scenario to set up.
+
+When the inference.py script calls env.reset(task="zombie_hunter"), the environment reads this YAML to understand that it needs to spawn 3 unused resources for the agent to find.
+
+Difficulty Tags: Judges use these to weigh your score. A "Hard" task that successfully runs is worth significantly more points than 3 "Easy" tasks.
+
+3. Why Pydantic instead of Standard Python?
+The OpenEnv validator uses a tool called Type Checking.
+
+Security: It prevents "prompt injection" where an agent might try to send a command like delete_all_servers_including_judge_machine.
+
+Consistency: Since you are using the OpenAI client in your inference.py, the LLM needs to generate Structured Output (JSON). Pydantic models can be converted into JSON Schema, which is exactly what the LLM needs to "see" the available tools.
