@@ -114,6 +114,24 @@ python inference.py
 
 ---
 
+## 🧠 Technical Architecture & Implementation
+
+### **System Design**
+CORE-RL follows the **OpenEnv standardized architecture**, decoupling the decision-making (Agent) from the world logic (Environment). 
+
+* **Environment Layer (`server/core_rl_environment.py`):** A stateful simulation that manages a dynamic pool of cloud resources. It calculates real-time burn rates and enforces "Criticality" constraints.
+* **API Layer (`server/app.py`):** A FastAPI-based wrapper that exposes the environment via a RESTful interface, enabling remote benchmarking.
+* **Agentic Baseline (`inference.py`):** A high-reasoning agent utilizing **Qwen-2.5-72B-Instruct**. It uses a Few-Shot Prompting technique to parse complex JSON observations into atomic cloud actions.
+
+### **Procedural Task Generation**
+Unlike static benchmarks, CORE-RL uses **Procedural Generation**. Every time `/reset` is called, the environment generates a unique infrastructure topology. This ensures the agent cannot "memorize" resource IDs and must rely on actual numerical reasoning to identify waste.
+
+### **Reward Shaping & Safety**
+The environment utilizes **Reward Shaping** to guide the agent toward safe optimization:
+1.  **Dense Rewards:** Small increments for every USD saved, providing immediate feedback.
+2.  **Hard Constraints:** A catastrophic penalty ($-1.0$) for stopping `is_critical` resources, training the agent to prioritize system uptime over cost savings.
+3.  **Efficiency Incentives:** A step penalty that discourages the agent from "wavering" and encourages reaching the goal in the fewest moves possible.
+
 ### **Why CORE-RL Wins?**
 1. **Direct Utility:** Addresses a $30B corporate pain point.
 2. **Safety-First:** Includes "Criticality" logic, the #1 concern for real-world AI deployment.
