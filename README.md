@@ -108,12 +108,6 @@ python inference.py
 
 ---
 
-## 👥 Authors & Contributors
-* **Rochan Awasthi** - [rochansawasthi@gmail.com](mailto:rochansawasthi@gmail.com)
-* **Sayali Bambal** - [sayalibambal218@gmail.com](mailto:sayalibambal218@gmail.com)
-
----
-
 ## 🧠 Technical Architecture & Implementation
 
 ### **System Design**
@@ -136,3 +130,11 @@ The environment utilizes **Reward Shaping** to guide the agent toward safe optim
 1. **Direct Utility:** Addresses a $30B corporate pain point.
 2. **Safety-First:** Includes "Criticality" logic, the #1 concern for real-world AI deployment.
 3. **Benchmark Grade:** Provides a reproducible scoring system for all 3 difficulty tiers
+
+---
+
+## 👥 Authors & Contributors
+* **Rochan Awasthi** - [rochansawasthi@gmail.com](mailto:rochansawasthi@gmail.com)
+* **Sayali Bambal** - [sayalibambal218@gmail.com](mailto:sayalibambal218@gmail.com)
+
+---
